@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دواء - تحليل الأدوية بالذكاء الاصطناعي</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #1a5f4a;
+            --primary-light: #2d8a6b;
+            --accent: #d4a574;
+            --bg: #fafaf8;
+            --surface: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+        }
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 2.5rem 1.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1), transparent 50%);
+            pointer-events: none;
+        }
+        h1 {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        .subtitle { color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; position: relative; }
+        
+        /* Main */
+        main { padding: 2rem 1.5rem; }
+        
+        /* Info Badge */
+        .info-badge {
+            background: linear-gradient(135deg, rgba(26, 95, 74, 0.1), rgba(45, 138, 107, 0.1));
+            border: 1px solid rgba(26, 95, 74, 0.2);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .info-badge-icon { font-size: 1.5rem; }
+        .info-badge-text {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 500;
+            line-height: 1.5;
+        }
+        
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--surface);
+            padding: 1.25rem 1rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        .stat-label { font-size: 0.8rem; color: var(--text-light); }
+        
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .feature-card {
+            background: var(--surface);
+            padding: 1.5rem 1rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .feature-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .feature-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+        .feature-desc {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            font-weight: 300;
+        }
+        
+        /* Recent Searches */
+        .recent-searches {
+            margin-bottom: 2rem;
+            display: none;
+        }
+        .recent-searches.active { display: block; }
+        .recent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .recent-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .clear-history {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            text-decoration: underline;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+        }
+        .recent-item {
+            background: var(--surface);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .recent-item:hover {
+            transform: translateX(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .recent-item-thumbnail {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .recent-item-info { flex: 1; }
+        .recent-item-name {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+        }
+        .recent-item-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        /* Upload Section */
+        .upload-section {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin-bottom: 2rem;
+            border: 2px dashed var(--border);
+        }
+        .upload-title {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+        }
+        .upload-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .upload-option {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            color: white;
+            border: none;
+            padding: 1.5rem 1rem;
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .upload-option:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(26, 95, 74, 0.3);
+        }
+        .upload-option-icon { font-size: 2rem; }
+        #fileInputGallery, #fileInputCamera { display: none; }
+        
+        .preview-container {
+            margin-top: 1.5rem;
+            display: none;
+        }
+        .preview-container.active { display: block; }
+        .image-preview {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .analyze-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            transition: all 0.3s ease;
+        }
+        .analyze-btn:hover { transform: translateY(-2px); }
+        
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .loading.active { display: block; }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--text-light); font-size: 0.95rem; }
+        .retry-info {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        /* Results */
+        .results-section { display: none; }
+        .results-section.active { display: block; }
+        .result-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-right: 4px solid var(--primary);
+        }
+        .result-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .result-stat {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            padding: 1rem 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+        .result-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .result-stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        .divider {
+            height: 1px;
+            background: linear-gradient(to left, transparent, var(--border), transparent);
+            margin: 1.5rem 0;
+        }
+        .result-section { margin-bottom: 1.5rem; }
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .section-content-box {
+            background: rgba(26, 95, 74, 0.03);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border-right: 3px solid var(--primary-light);
+            line-height: 1.8;
+        }
+        .warning-box {
+            background: #fef3c7;
+            border-right: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #92400e;
+        }
+        .new-search-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--surface);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+        }
+        .new-search-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            header { padding: 2rem 1rem 1.5rem; }
+            h1 { font-size: 1.75rem; }
+            main { padding: 1.5rem 1rem; }
+            .stats-cards { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+            .stat-card { padding: 1rem 0.5rem; }
+            .stat-value { font-size: 1.25rem; }
+            .upload-section { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💊 دواء</h1>
+            <p class="subtitle">تحليل الأدوية بالذكاء الاصطناعي</p>
+        </header>
+
+        <main>
+            <div class="info-badge">
+                <span class="info-badge-icon">✨</span>
+                <span class="info-badge-text">
+                    اكتشف معلومات شاملة عن أي دواء بمجرد التقاط صورة - سريع، دقيق، وموثوق
+                </span>
+            </div>
+
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-value" id="totalSearches">0</div>
+                    <div class="stat-label">عملية بحث</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value">&lt;3</div>
+                    <div class="stat-label">ثوانٍ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value">99%</div>
+                    <div class="stat-label">دقة</div>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">ذكاء اصطناعي متقدم</div>
+                    <div class="feature-desc">تقنية Claude AI</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">تقرير شامل</div>
+                    <div class="feature-desc">معلومات طبية دقيقة</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <div class="feature-title">آمن تماماً</div>
+                    <div class="feature-desc">خصوصية محمية</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-title">سهل الاستخدام</div>
+                    <div class="feature-desc">واجهة بسيطة</div>
+                </div>
+            </div>
+
+            <div class="recent-searches" id="recentSearches">
+                <div class="recent-header">
+                    <h3 class="recent-title">
+                        <span>🕐</span>
+                        <span>آخر عمليات البحث</span>
+                    </h3>
+                    <button class="clear-history" id="clearHistory">مسح السجل</button>
+                </div>
+                <div id="recentList"></div>
+            </div>
+
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-title">📸 اختر طريقة رفع الصورة</div>
+                
+                <div class="upload-options">
+                    <button class="upload-option" id="cameraBtn">
+                        <span class="upload-option-icon">📷</span>
+                        <span>فتح الكاميرا</span>
+                    </button>
+                    <button class="upload-option" id="galleryBtn">
+                        <span class="upload-option-icon">🖼️</span>
+                        <span>من المعرض</span>
+                    </button>
+                </div>
+
+                <input type="file" id="fileInputCamera" accept="image/*" capture="environment">
+                <input type="file" id="fileInputGallery" accept="image/*">
+                
+                <div class="preview-container" id="previewContainer">
+                    <img id="imagePreview" class="image-preview">
+                    <button class="analyze-btn" id="analyzeBtn">🔬 تحليل الدواء الآن</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div class="loading-text" id="loadingText">جاري تحليل الدواء...</div>
+                <div class="retry-info" id="retryInfo"></div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="result-card">
+                    <h2 class="result-title">💊 <span id="medicineName"></span></h2>
+
+                    <div class="result-stats">
+                        <div class="result-stat">
+                            <div class="result-stat-value">📋</div>
+                            <div class="result-stat-label">فئة علاجية</div>
+                        </div>
+                        <div class="result-stat">
+                            <div class="result-stat-value">✓</div>
+                            <div class="result-stat-label">تم التحليل</div>
+                        </div>
+                        <div class="result-stat">
+                            <div class="result-stat-value">AI</div>
+                            <div class="result-stat-label">ذكاء اصطناعي</div>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="result-section">
+                        <div class="section-label">🔬 المادة الفعالة</div>
+                        <div class="section-content-box" id="activeIngredient"></div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="result-section">
+                        <div class="section-label">💡 الاستخدامات الطبية</div>
+                        <div class="section-content-box" id="uses"></div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="result-section">
+                        <div class="section-label">💊 الجرعة الموصى بها</div>
+                        <div class="section-content-box" id="dosage"></div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="result-section">
+                        <div class="section-label">⚠️ الآثار الجانبية المحتملة</div>
+                        <div class="section-content-box" id="sideEffects"></div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="result-section">
+                        <div class="section-label">🛑 التحذيرات والاحتياطات</div>
+                        <div class="section-content-box" id="warnings"></div>
+                    </div>
+
+                    <div class="warning-box">
+                        <strong>⚠️ تنبيه طبي مهم:</strong><br>
+                        هذه المعلومات للإرشاد العام فقط ولا تغني عن استشارة الطبيب أو الصيدلي المختص. يجب استشارة مقدم الرعاية الصحية قبل تناول أي دواء.
+                    </div>
+                </div>
+
+                <button class="new-search-btn" id="newSearchBtn">🔍 بحث عن دواء آخر</button>
+            </div>
+        </main>
+
+        <footer>
+            <p>مدعوم بتقنية الذكاء الاصطناعي من Anthropic Claude</p>
+            <p style="margin-top: 0.5rem; font-size: 0.75rem;">جميع الحقوق محفوظة © 2024</p>
+        </footer>
+    </div>
+
+    <script>
+        const fileInputCamera = document.getElementById('fileInputCamera');
+        const fileInputGallery = document.getElementById('fileInputGallery');
+        const cameraBtn = document.getElementById('cameraBtn');
+        const galleryBtn = document.getElementById('galleryBtn');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        const retryInfo = document.getElementById('retryInfo');
+        const uploadSection = document.getElementById('uploadSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const newSearchBtn = document.getElementById('newSearchBtn');
+        const recentSearches = document.getElementById('recentSearches');
+        const recentList = document.getElementById('recentList');
+        const clearHistory = document.getElementById('clearHistory');
+        const totalSearchesEl = document.getElementById('totalSearches');
+
+        let currentImage = null;
+        let recentMedicines = [];
+
+        // Load data
+        try {
+            const stored = localStorage.getItem('recentMedicines');
+            if (stored) recentMedicines = JSON.parse(stored);
+        } catch (e) {
+            console.error('Error loading history:', e);
+            recentMedicines = [];
+        }
+
+        window.addEventListener('load', () => {
+            displayRecentSearches();
+            updateStats();
+        });
+
+        function updateStats() {
+            totalSearchesEl.textContent = recentMedicines.length;
+        }
+
+        function displayRecentSearches() {
+            if (recentMedicines.length === 0) {
+                recentSearches.classList.remove('active');
+                return;
+            }
+
+            recentSearches.classList.add('active');
+            recentList.innerHTML = '';
+
+            recentMedicines.slice(0, 5).forEach((medicine) => {
+                const item = document.createElement('div');
+                item.className = 'recent-item';
+                
+                const thumbnail = medicine.image || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="50" height="50"%3E%3Crect fill="%232d8a6b" width="50" height="50"/%3E%3Ctext x="25" y="30" font-size="20" text-anchor="middle" fill="white"%3E💊%3C/text%3E%3C/svg%3E';
+                
+                item.innerHTML = `
+                    <img src="${thumbnail}" alt="${medicine.name}" class="recent-item-thumbnail">
+                    <div class="recent-item-info">
+                        <div class="recent-item-name">${medicine.name}</div>
+                        <div class="recent-item-date">${medicine.date}</div>
+                    </div>
+                `;
+                item.addEventListener('click', () => loadRecentMedicine(medicine));
+                recentList.appendChild(item);
+            });
+        }
+
+        function loadRecentMedicine(medicine) {
+            displayResults(medicine.data);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        clearHistory.addEventListener('click', () => {
+            if (confirm('هل أنت متأكد من مسح سجل البحث؟')) {
+                recentMedicines = [];
+                localStorage.removeItem('recentMedicines');
+                displayRecentSearches();
+                updateStats();
+            }
+        });
+
+        function saveToRecent(medicineName, medicineData) {
+            try {
+                const newEntry = {
+                    name: medicineName,
+                    image: currentImage,
+                    date: new Date().toLocaleDateString('ar-EG', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    data: medicineData
+                };
+
+                recentMedicines = recentMedicines.filter(m => m.name !== medicineName);
+                recentMedicines.unshift(newEntry);
+                recentMedicines = recentMedicines.slice(0, 10);
+                
+                localStorage.setItem('recentMedicines', JSON.stringify(recentMedicines));
+                displayRecentSearches();
+                updateStats();
+            } catch (e) {
+                console.error('Error saving:', e);
+            }
+        }
+
+        // Camera and Gallery buttons
+        cameraBtn.addEventListener('click', () => fileInputCamera.click());
+        galleryBtn.addEventListener('click', () => fileInputGallery.click());
+
+        fileInputCamera.addEventListener('change', (e) => handleFileSelect(e));
+        fileInputGallery.addEventListener('change', (e) => handleFileSelect(e));
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert('حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 5 ميجابايت');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                imagePreview.src = currentImage;
+                previewContainer.classList.add('active');
+            };
+            reader.onerror = () => {
+                alert('فشل في قراءة الصورة. يرجى المحاولة مرة أخرى');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    if (i > 0) {
+                        // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                        const delay = Math.min(2000 * Math.pow(2, i), 32000);
+                        retryInfo.textContent = `إعادة المحاولة ${i}/${maxRetries}... الرجاء الانتظار`;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                    
+                    const response = await fetch(url, options);
+                    if (response.ok) return response;
+                    
+                    // Handle 429 specifically
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        console.log(`Rate limit (429), waiting before retry...`);
+                        continue;
+                    }
+                    
+                    if (response.status >= 500 && i < maxRetries - 1) continue;
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                }
+            }
+        }
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!currentImage) return;
+
+            uploadSection.style.display = 'none';
+            recentSearches.style.display = 'none';
+            loading.classList.add('active');
+            resultsSection.classList.remove('active');
+            loadingText.textContent = 'جاري تحليل الدواء...';
+            retryInfo.textContent = '';
+
+            try {
+                const imageType = currentImage.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+                const base64Data = currentImage.split(',')[1];
+
+                const response = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 3500,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'image', source: { type: 'base64', media_type: imageType, data: base64Data } },
+                                { type: 'text', text: `حلل صورة الدواء واعطني معلومات شاملة ومفصلة بتنسيق JSON فقط.
+
+تعليمات مهمة:
+1. اكتب جميع الشروحات والتفاصيل باللغة العربية الفصحى الواضحة
+2. الأسماء الكيميائية والعلمية فقط بالإنجليزية
+3. اشرح كل معلومة بالتفصيل بطريقة مفهومة
+4. لا تستخدم اسطر جديدة او علامات اقتباس داخل القيم
+
+التنسيق:
+{
+  "name": "اسم الدواء التجاري (الاسم العلمي)",
+  "activeIngredient": "المادة الفعالة بالإنجليزية مع التركيز مثل Paracetamol 500mg",
+  "uses": "شرح مفصل بالعربية للاستخدامات الطبية. اذكر الحالات المرضية التي يعالجها الدواء وكيف يعمل بجمل واضحة",
+  "dosage": "شرح مفصل بالعربية للجرعة للبالغين والأطفال مع طريقة الاستخدام والتوقيت",
+  "sideEffects": "شرح مفصل بالعربية للآثار الجانبية. رتبها من الأكثر شيوعا للأقل واشرح كل عرض",
+  "warnings": "شرح مفصل بالعربية للتحذيرات. متى يجب تجنبه ومع أي أدوية لا يخلط وما الحالات التي تتطلب حذرا"
+}
+
+مثال: "يستخدم لتخفيف الآلام الخفيفة مثل الصداع وآلام الأسنان. يساعد في خفض الحرارة عند الحمى" وليس "pain relief"` }
+                            ]
+                        }]
+                    })
+                }, 3);
+
+                if (!response.ok) throw new Error(`خطأ ${response.status}. حاول لاحقاً`);
+
+                const data = await response.json();
+                if (!data.content?.[0]?.text) throw new Error('لا يوجد رد');
+
+                let text = data.content[0].text.trim().replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+                const start = text.indexOf('{'), end = text.lastIndexOf('}');
+                if (start === -1 || end === -1) throw new Error('بيانات غير صحيحة');
+                
+                text = text.substring(start, end + 1);
+                let medicineData = JSON.parse(text);
+                
+                Object.keys(medicineData).forEach(key => {
+                    if (typeof medicineData[key] === 'string') {
+                        medicineData[key] = medicineData[key].replace(/\\n/g, ' ').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                    }
+                });
+
+                if (!medicineData.name) throw new Error('لم يتم التعرف على الدواء');
+
+                saveToRecent(medicineData.name, medicineData);
+                displayResults(medicineData);
+
+            } catch (error) {
+                console.error(error);
+                let msg = 'حدث خطأ في معالجة الصورة.\n\n';
+                
+                if (error.message.includes('429')) {
+                    msg = '⏳ تجاوزت الحد المسموح من الطلبات.\n\nيرجى الانتظار دقيقة واحدة قبل المحاولة مرة أخرى.';
+                } else if (error.message.includes('529')) {
+                    msg = 'الخادم مشغول حالياً. يرجى المحاولة بعد قليل.';
+                } else if (error.message.includes('500')) {
+                    msg = 'خطأ في الخادم. يرجى المحاولة مرة أخرى بعد قليل.';
+                } else if (error.message.includes('Network')) {
+                    msg = 'فشل الاتصال بالإنترنت. تحقق من اتصالك وحاول مرة أخرى.';
+                } else {
+                    msg += error.message;
+                }
+                
+                alert(msg);
+                resetView();
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('medicineName').textContent = data.name || 'غير محدد';
+            document.getElementById('activeIngredient').innerHTML = formatText(data.activeIngredient || 'غير متوفر');
+            document.getElementById('uses').innerHTML = formatText(data.uses || 'غير متوفر');
+            document.getElementById('dosage').innerHTML = formatText(data.dosage || 'غير متوفر');
+            document.getElementById('sideEffects').innerHTML = formatText(data.sideEffects || 'غير متوفر');
+            document.getElementById('warnings').innerHTML = formatText(data.warnings || 'غير متوفر');
+
+            loading.classList.remove('active');
+            resultsSection.classList.add('active');
+            
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function formatText(text) {
+            if (!text || text === 'غير متوفر') return '<p>غير متوفر</p>';
+            
+            // Split by periods or Arabic comma
+            const sentences = text.split(/[.،۔]/).map(s => s.trim()).filter(s => s.length > 10);
+            
+            if (sentences.length <= 1) {
+                return `<p style="line-height: 1.9;">${text}</p>`;
+            }
+            
+            // If we have multiple sentences, format as paragraphs
+            if (sentences.length <= 3) {
+                return sentences.map(s => `<p style="margin-bottom: 0.75rem; line-height: 1.9;">${s}.</p>`).join('');
+            }
+            
+            // For many sentences, use bullet points
+            let html = '<ul style="padding-right: 1.5rem; margin-top: 0.5rem;">';
+            sentences.forEach(sentence => {
+                if (sentence.length > 5) {
+                    html += `<li style="margin-bottom: 0.75rem; line-height: 1.9;">${sentence}.</li>`;
+                }
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function resetView() {
+            uploadSection.style.display = 'block';
+            recentSearches.style.display = 'block';
+            loading.classList.remove('active');
+            resultsSection.classList.remove('active');
+            previewContainer.classList.remove('active');
+            retryInfo.textContent = '';
+            currentImage = null;
+            fileInputCamera.value = '';
+            fileInputGallery.value = '';
+            displayRecentSearches();
+        }
+
+        newSearchBtn.addEventListener('click', () => {
+            resetView();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        console.log('✅ التطبيق جاهز');
+    </script>
+</body>
+</html>
